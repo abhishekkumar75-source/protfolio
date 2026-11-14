@@ -1,0 +1,220 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #F7F7F2;
+  --foreground: #171717;
+  --muted: #777777;
+  --accent: #B7FF65;
+  --silver: #C0C0C0;
+  --card: #FFFFFF;
+  --border: #E5E5E5;
+}
+
+.dark {
+  --background: #0A0A0A;
+  --foreground: #F7F7F2;
+  --muted: #888888;
+  --accent: #B7FF65;
+  --silver: #A0A0A0;
+  --card: #121212;
+  --border: #2A2A2A;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Geist', 'Inter', system-ui, sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+  line-height: 1.6;
+  overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Text blend mode utilities */
+.text-blend-difference {
+  color: var(--foreground);
+  mix-blend-mode: difference;
+}
+
+.text-blend-difference-inverted {
+  color: var(--background);
+  mix-blend-mode: difference;
+}
+
+/* Accent text preserves its color - no blend mode */
+.text-accent,
+.text-accent *,
+.font-medium.text-accent,
+.font-semibold.text-accent,
+.font-bold.text-accent,
+span.text-accent,
+span.font-medium.text-accent,
+span.font-semibold.text-accent,
+span.font-bold.text-accent {
+  mix-blend-mode: normal !important;
+  color: var(--accent) !important;
+}
+
+/* Ensure headings and specific elements can opt into blend mode */
+.blend-text {
+  color: var(--foreground);
+  mix-blend-mode: difference;
+}
+
+.blend-text-inverted {
+  color: var(--background);
+  mix-blend-mode: difference;
+}
+
+/* Dark mode specific adjustments */
+.dark .bg-background {
+  background-color: var(--background);
+}
+
+.dark .bg-foreground\/5 {
+  background-color: rgba(247, 247, 242, 0.05);
+}
+
+.dark .bg-foreground\/10 {
+  background-color: rgba(247, 247, 242, 0.1);
+}
+
+.dark .border-foreground\/10 {
+  border-color: rgba(247, 247, 242, 0.1);
+}
+
+.dark .border-foreground\/5 {
+  border-color: rgba(247, 247, 242, 0.05);
+}
+
+.dark .text-foreground\/5 {
+  color: rgba(247, 247, 242, 0.05);
+}
+
+.dark .text-foreground\/10 {
+  color: rgba(247, 247, 242, 0.1);
+}
+
+.dark .text-muted\/50 {
+  color: rgba(136, 136, 136, 0.5);
+}
+
+.dark .text-muted\/70 {
+  color: rgba(136, 136, 136, 0.7);
+}
+
+.dark .text-muted\/80 {
+  color: rgba(136, 136, 136, 0.8);
+}
+
+.dark .hover\:bg-accent\/5:hover {
+  background-color: rgba(183, 255, 101, 0.05);
+}
+
+.dark .hover\:border-accent\/50:hover {
+  border-color: rgba(183, 255, 101, 0.5);
+}
+
+.dark .hover\:text-accent:hover {
+  color: var(--accent);
+}
+
+.dark .hover\:bg-foreground\/5:hover {
+  background-color: rgba(247, 247, 242, 0.05);
+}
+
+.dark .hover\:bg-foreground\/10:hover {
+  background-color: rgba(247, 247, 242, 0.1);
+}
+
+.dark .hover\:border-foreground\/10:hover {
+  border-color: rgba(247, 247, 242, 0.1);
+}
+
+.dark .bg-background\/80 {
+  background-color: rgba(10, 10, 10, 0.8);
+}
+
+.dark .from-foreground\/20 {
+  --tw-gradient-from: rgba(247, 247, 242, 0.2) var(--tw-gradient-from-position);
+}
+
+.dark .to-foreground\/20 {
+  --tw-gradient-to: rgba(247, 247, 242, 0.2) var(--tw-gradient-to-position);
+}
+
+.dark .via-foreground\/20 {
+  --tw-gradient-to: rgba(247, 247, 242, 0.2) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), rgba(247, 247, 242, 0.2) var(--tw-gradient-via-position), var(--tw-gradient-to);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
+}
+
+canvas {
+  display: block;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(183, 255, 101, 0.3), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Ensure 3D canvases are behind text for blend mode to work */
+canvas {
+  z-index: 0;
+}
+
+/* Text that should blend with 3D background */
+section[id] > div > div:not(.fixed):not([class*="z-"]) {
+  position: relative;
+  z-index: 10;
+}

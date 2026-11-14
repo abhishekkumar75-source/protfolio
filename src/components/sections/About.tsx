@@ -3,16 +3,28 @@
 import { motion } from 'framer-motion'
 import { useRef, useState, useEffect } from 'react'
 import { AboutOrbitCanvas } from '@/components/3d/AboutOrbit'
-import { useQuality } from '@/hooks/useDevice'
+import { useQuality, useDevice } from '@/hooks/useDevice'
 
 export function About() {
   const canvasRef = useRef<HTMLDivElement>(null)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [isVisible, setIsVisible] = useState(true)
+  const [webglSupported, setWebglSupported] = useState(true)
   const quality = useQuality()
+  const { isMobile: _isMobile } = useDevice()
 
   useEffect(() => {
-    if (quality === 'low') return
+    try {
+      const canvas = document.createElement('canvas')
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+      setWebglSupported(!!gl)
+    } catch {
+      setWebglSupported(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (quality === 'low' || !webglSupported) return
 
     const handleMouseMove = (e: MouseEvent) => {
       const rect = canvasRef.current?.getBoundingClientRect()
@@ -26,7 +38,7 @@ export function About() {
 
     window.addEventListener('mousemove', handleMouseMove)
     return () => window.removeEventListener('mousemove', handleMouseMove)
-  }, [quality])
+  }, [quality, webglSupported])
 
   // Pause 3D when off-screen
   useEffect(() => {
@@ -39,10 +51,19 @@ export function About() {
     return () => observer.disconnect()
   }, [])
 
+  const show3D = isVisible && webglSupported && quality !== 'low'
+
   return (
     <section id="about" className="relative min-h-screen flex" ref={canvasRef}>
       <div className="absolute inset-0 z-0 overflow-hidden">
-        {isVisible && <AboutOrbitCanvas mousePosition={mousePosition} quality={quality} />}
+        {show3D ? (
+          <AboutOrbitCanvas mousePosition={mousePosition} quality={quality} />
+        ) : (
+          <div
+            className="absolute inset-0 bg-gradient-to-br from-background via-background to-accent/5"
+            aria-hidden="true"
+          />
+        )}
       </div>
 
       <div className="relative z-10 flex-1 w-full max-w-[1400px] mx-auto px-6 md:px-12 flex items-center">

@@ -3,15 +3,27 @@
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { useRef, useEffect, useState } from 'react'
 import { InteractiveExperienceCanvas } from '@/components/3d/InteractiveExperience'
-import { useQuality } from '@/hooks/useDevice'
+import { useQuality, useDevice } from '@/hooks/useDevice'
 
 export function Experience() {
   const canvasRef = useRef<HTMLDivElement>(null)
   const [isVisible, setIsVisible] = useState(true)
+  const [webglSupported, setWebglSupported] = useState(true)
   const quality = useQuality()
+  const { isMobile: _isMobile } = useDevice()
   const { scrollY } = useScroll()
   const opacityProgress = useTransform(scrollY, [0, window.innerHeight * 0.3], [0, 1])
   const scaleProgress = useTransform(scrollY, [0, window.innerHeight], [1, 0.95])
+
+  useEffect(() => {
+    try {
+      const canvas = document.createElement('canvas')
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+      setWebglSupported(!!gl)
+    } catch {
+      setWebglSupported(false)
+    }
+  }, [])
 
   // Pause 3D when off-screen
   useEffect(() => {
@@ -24,10 +36,19 @@ export function Experience() {
     return () => observer.disconnect()
   }, [])
 
+  const show3D = isVisible && webglSupported && quality !== 'low'
+
   return (
     <section id="experience" className="relative min-h-[100vh] w-full overflow-hidden" ref={canvasRef}>
       <div className="absolute inset-0 z-0">
-        {isVisible && <InteractiveExperienceCanvas quality={quality} />}
+        {show3D ? (
+          <InteractiveExperienceCanvas quality={quality} />
+        ) : (
+          <div
+            className="absolute inset-0 bg-gradient-to-br from-background via-background to-accent/5"
+            aria-hidden="true"
+          />
+        )}
       </div>
 
       <motion.div

@@ -4,19 +4,32 @@ import { motion, useScroll, useTransform } from 'framer-motion'
 import { useRef, useState, useEffect } from 'react'
 import { HeroCenterpieceCanvas } from '@/components/3d/HeroCenterpiece'
 import { MousePointerClick } from 'lucide-react'
-import { useQuality } from '@/hooks/useDevice'
+import { useQuality, useDevice } from '@/hooks/useDevice'
 
 export function Hero() {
   const canvasRef = useRef<HTMLDivElement>(null)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [isVisible, setIsVisible] = useState(true)
+  const [webglSupported, setWebglSupported] = useState(true)
   const quality = useQuality()
+  const { isMobile: _isMobile } = useDevice()
   const { scrollY } = useScroll()
   const scaleProgress = useTransform(scrollY, [0, window.innerHeight * 0.5], [1, 0.85])
   const opacityProgress = useTransform(scrollY, [0, window.innerHeight * 0.7], [1, 0])
 
+  // Check WebGL support
   useEffect(() => {
-    if (quality === 'low') return // Skip mouse tracking on low quality
+    try {
+      const canvas = document.createElement('canvas')
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+      setWebglSupported(!!gl)
+    } catch {
+      setWebglSupported(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (quality === 'low' || !webglSupported) return
 
     const handleMouseMove = (e: MouseEvent) => {
       const rect = canvasRef.current?.getBoundingClientRect()
@@ -30,7 +43,7 @@ export function Hero() {
 
     window.addEventListener('mousemove', handleMouseMove)
     return () => window.removeEventListener('mousemove', handleMouseMove)
-  }, [quality])
+  }, [quality, webglSupported])
 
   // Pause 3D when off-screen
   useEffect(() => {
@@ -43,10 +56,20 @@ export function Hero() {
     return () => observer.disconnect()
   }, [])
 
+  const show3D = isVisible && webglSupported && quality !== 'low'
+
   return (
     <section id="home" className="relative min-h-screen flex flex-col" ref={canvasRef}>
       <div className="absolute inset-0 z-0 overflow-hidden">
-        {isVisible && <HeroCenterpieceCanvas mousePosition={mousePosition} quality={quality} />}
+        {show3D ? (
+          <HeroCenterpieceCanvas mousePosition={mousePosition} quality={quality} />
+        ) : (
+          // Fallback: static gradient background for mobile/no-webgl
+          <div
+            className="absolute inset-0 bg-gradient-to-br from-background via-background to-accent/5"
+            aria-hidden="true"
+          />
+        )}
       </div>
 
       <motion.div

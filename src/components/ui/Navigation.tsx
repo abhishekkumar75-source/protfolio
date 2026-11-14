@@ -3,7 +3,8 @@
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
-import { Sun, Moon } from 'lucide-react'
+import { Sun, Moon, Menu, X } from 'lucide-react'
+import { useDevice } from '@/hooks/useDevice'
 
 const navItems = [
   { href: '#about', label: 'About' },
@@ -14,9 +15,11 @@ const navItems = [
 ]
 
 export function Navigation() {
+  const { isMobile: _isMobile } = useDevice()
   const [isScrolled, setIsScrolled] = useState(false)
   const [activeSection, setActiveSection] = useState('home')
   const [isDark, setIsDark] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -60,6 +63,8 @@ export function Navigation() {
     localStorage.setItem('theme', newIsDark ? 'dark' : 'light')
   }
 
+  const closeMenu = () => setIsMenuOpen(false)
+
   return (
     <motion.nav
       className={cn(
@@ -83,6 +88,7 @@ export function Navigation() {
           Abhishek Kumar
         </motion.div>
 
+        {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-10">
           {navItems.map((item, index) => (
             <motion.a
@@ -98,6 +104,7 @@ export function Navigation() {
               transition={{ delay: 0.2 + index * 0.05, duration: 0.5 }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              onClick={closeMenu}
             >
               {item.label}
               <motion.span
@@ -134,7 +141,63 @@ export function Navigation() {
             </motion.div>
           </button>
         </motion.div>
+
+        {/* Mobile menu button */}
+        <motion.button
+          className="md:hidden p-2 rounded-xl bg-foreground/5 border border-foreground/10 hover:border-accent/50 transition-all duration-300 text-muted hover:text-foreground"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+          whileTap={{ scale: 0.95 }}
+        >
+          {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </motion.button>
       </div>
+
+      {/* Mobile menu */}
+      <motion.div
+        className={cn(
+          'md:hidden absolute top-full left-0 right-0 px-6 pb-6 bg-background/95 backdrop-blur-md border-b border-foreground/5',
+          'flex flex-col items-start gap-4'
+        )}
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ opacity: isMenuOpen ? 1 : 0, height: isMenuOpen ? 'auto' : 0 }}
+        transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+      >
+        {navItems.map((item, index) => (
+          <motion.a
+            key={item.href}
+            href={item.href}
+            className={cn(
+              'w-full text-left px-4 py-3 rounded-xl text-base font-medium',
+              'transition-colors duration-300',
+              activeSection === item.href.slice(1) ? 'text-accent bg-accent/10' : 'text-muted hover:text-foreground hover:bg-foreground/5'
+            )}
+            onClick={closeMenu}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 + index * 0.05, duration: 0.3 }}
+          >
+            {item.label}
+          </motion.a>
+        ))}
+        <motion.div
+          className="w-full pt-4 flex items-center justify-between gap-3"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.3 }}
+        >
+          <span className="flex-1 px-4 py-2 rounded-full border border-foreground/10 bg-foreground/5 text-sm text-muted">
+            Currently learning & building
+          </span>
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-xl bg-foreground/5 border border-foreground/10 hover:border-accent/50 hover:bg-accent/5 transition-all duration-300 text-muted hover:text-foreground"
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
+        </motion.div>
+      </motion.div>
     </motion.nav>
   )
 }

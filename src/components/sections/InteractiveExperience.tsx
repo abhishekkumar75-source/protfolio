@@ -1,17 +1,33 @@
 'use client'
 
 import { motion, useScroll, useTransform } from 'framer-motion'
+import { useRef, useEffect, useState } from 'react'
 import { InteractiveExperienceCanvas } from '@/components/3d/InteractiveExperience'
+import { useQuality } from '@/hooks/useDevice'
 
 export function Experience() {
+  const canvasRef = useRef<HTMLDivElement>(null)
+  const [isVisible, setIsVisible] = useState(true)
+  const quality = useQuality()
   const { scrollY } = useScroll()
   const opacityProgress = useTransform(scrollY, [0, window.innerHeight * 0.3], [0, 1])
   const scaleProgress = useTransform(scrollY, [0, window.innerHeight], [1, 0.95])
 
+  // Pause 3D when off-screen
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { threshold: 0.1 }
+    )
+    const el = canvasRef.current
+    if (el) observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
   return (
-    <section id="experience" className="relative min-h-[100vh] w-full overflow-hidden">
+    <section id="experience" className="relative min-h-[100vh] w-full overflow-hidden" ref={canvasRef}>
       <div className="absolute inset-0 z-0">
-        <InteractiveExperienceCanvas />
+        {isVisible && <InteractiveExperienceCanvas quality={quality} />}
       </div>
 
       <motion.div

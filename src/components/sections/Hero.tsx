@@ -4,15 +4,20 @@ import { motion, useScroll, useTransform } from 'framer-motion'
 import { useRef, useState, useEffect } from 'react'
 import { HeroCenterpieceCanvas } from '@/components/3d/HeroCenterpiece'
 import { MousePointerClick } from 'lucide-react'
+import { useQuality } from '@/hooks/useDevice'
 
 export function Hero() {
   const canvasRef = useRef<HTMLDivElement>(null)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const [isVisible, setIsVisible] = useState(true)
+  const quality = useQuality()
   const { scrollY } = useScroll()
   const scaleProgress = useTransform(scrollY, [0, window.innerHeight * 0.5], [1, 0.85])
   const opacityProgress = useTransform(scrollY, [0, window.innerHeight * 0.7], [1, 0])
 
   useEffect(() => {
+    if (quality === 'low') return // Skip mouse tracking on low quality
+
     const handleMouseMove = (e: MouseEvent) => {
       const rect = canvasRef.current?.getBoundingClientRect()
       if (rect) {
@@ -25,12 +30,23 @@ export function Hero() {
 
     window.addEventListener('mousemove', handleMouseMove)
     return () => window.removeEventListener('mousemove', handleMouseMove)
+  }, [quality])
+
+  // Pause 3D when off-screen
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { threshold: 0.1 }
+    )
+    const el = canvasRef.current
+    if (el) observer.observe(el)
+    return () => observer.disconnect()
   }, [])
 
   return (
     <section id="home" className="relative min-h-screen flex flex-col" ref={canvasRef}>
       <div className="absolute inset-0 z-0 overflow-hidden">
-        <HeroCenterpieceCanvas mousePosition={mousePosition} />
+        {isVisible && <HeroCenterpieceCanvas mousePosition={mousePosition} quality={quality} />}
       </div>
 
       <motion.div

@@ -3,12 +3,17 @@
 import { motion } from 'framer-motion'
 import { useRef, useState, useEffect } from 'react'
 import { AboutOrbitCanvas } from '@/components/3d/AboutOrbit'
+import { useQuality } from '@/hooks/useDevice'
 
 export function About() {
   const canvasRef = useRef<HTMLDivElement>(null)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const [isVisible, setIsVisible] = useState(true)
+  const quality = useQuality()
 
   useEffect(() => {
+    if (quality === 'low') return
+
     const handleMouseMove = (e: MouseEvent) => {
       const rect = canvasRef.current?.getBoundingClientRect()
       if (rect) {
@@ -21,12 +26,23 @@ export function About() {
 
     window.addEventListener('mousemove', handleMouseMove)
     return () => window.removeEventListener('mousemove', handleMouseMove)
+  }, [quality])
+
+  // Pause 3D when off-screen
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { threshold: 0.1 }
+    )
+    const el = canvasRef.current
+    if (el) observer.observe(el)
+    return () => observer.disconnect()
   }, [])
 
   return (
     <section id="about" className="relative min-h-screen flex" ref={canvasRef}>
       <div className="absolute inset-0 z-0 overflow-hidden">
-        <AboutOrbitCanvas mousePosition={mousePosition} />
+        {isVisible && <AboutOrbitCanvas mousePosition={mousePosition} quality={quality} />}
       </div>
 
       <div className="relative z-10 flex-1 w-full max-w-[1400px] mx-auto px-6 md:px-12 flex items-center">
@@ -101,7 +117,7 @@ export function About() {
               </div>
             </div>
 
-            {/* Visual accent on the right */}
+            {/* Visual accent on the right - simplified for mobile */}
             <div className="md:col-span-5 relative">
               <div className="aspect-square relative hidden md:block">
                 <svg

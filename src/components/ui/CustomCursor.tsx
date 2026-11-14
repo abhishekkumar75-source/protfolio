@@ -3,13 +3,21 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { useDevice } from '@/hooks/useDevice'
 
 export function CustomCursor() {
+  const { isMobile, prefersReducedMotion } = useDevice()
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [isVisible, setIsVisible] = useState(false)
   const [isClicking, setIsClicking] = useState(false)
   const cursorRef = useRef<HTMLDivElement>(null)
   const followerRef = useRef<HTMLDivElement>(null)
+  const followerX = useRef(0)
+  const followerY = useRef(0)
+  const rafRef = useRef<number>()
+
+  // Disable entirely on mobile or reduced motion
+  if (isMobile || prefersReducedMotion) return null
 
   useEffect(() => {
     const updatePosition = (e: MouseEvent) => {
@@ -22,7 +30,7 @@ export function CustomCursor() {
     const handleMouseLeave = () => setIsVisible(false)
     const handleMouseEnter = () => setIsVisible(true)
 
-    window.addEventListener('mousemove', updatePosition)
+    window.addEventListener('mousemove', updatePosition, { passive: true })
     window.addEventListener('mousedown', handleMouseDown)
     window.addEventListener('mouseup', handleMouseUp)
     window.addEventListener('mouseleave', handleMouseLeave)
@@ -34,24 +42,22 @@ export function CustomCursor() {
       window.removeEventListener('mouseup', handleMouseUp)
       window.removeEventListener('mouseleave', handleMouseLeave)
       window.removeEventListener('mouseenter', handleMouseEnter)
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
   }, [isVisible])
 
-  // Smooth follower animation
+  // Smooth follower animation - use refs to avoid re-renders
   useEffect(() => {
-    let followerX = position.x
-    let followerY = position.y
-
     const animate = () => {
       if (followerRef.current) {
-        followerX += (position.x - followerX) * 0.15
-        followerY += (position.y - followerY) * 0.15
-        followerRef.current.style.transform = `translate(${followerX}px, ${followerY}px)`
+        followerX.current += (position.x - followerX.current) * 0.15
+        followerY.current += (position.y - followerY.current) * 0.15
+        followerRef.current.style.transform = `translate(${followerX.current}px, ${followerY.current}px)`
       }
-      requestAnimationFrame(animate)
+      rafRef.current = requestAnimationFrame(animate)
     }
-
-    animate()
+    rafRef.current = requestAnimationFrame(animate)
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
   }, [position])
 
   if (!isVisible) return null
